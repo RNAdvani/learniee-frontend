@@ -1,4 +1,5 @@
 import { User } from '@/types'
+import axios from 'axios'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -13,17 +14,11 @@ interface AuthState {
 // Utility function to fetch the user data based on the token (from the httpOnly cookie)
 const fetchUserFromToken = async () => {
   try {
-    const response = await fetch(`http://localhost:5000/api/user/me`, {
-      method: 'GET',
-      credentials: 'include', // Important for sending the httpOnly cookie
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/me`, {
+      withCredentials: true,
     });
 
-    if (!response.ok) {
-      throw new Error('User not authenticated');
-    }
-
-    const userData = await response.json();
-    return userData;
+    return response.data
   } catch (error) {
     console.error('Error fetching user data:', error);
     return null;
@@ -43,9 +38,11 @@ export const useAuth = create<AuthState>()(
 
       // Function to fetch the user from the server
       fetchUser: async () => {
-        if(get().isAuthenticated) return;
+        if (get().isAuthenticated) {
+          return;
+        }
         const userData = await fetchUserFromToken();
-        set({ user: userData, isAuthenticated: !!userData });
+        set({ user: userData.user, isAuthenticated: !!userData });
       },
     }),
     {

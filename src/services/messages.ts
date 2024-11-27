@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const getMessages = async (receiver_id: string) => {
     try {
-        const res = await axios.get(`http://localhost:5000/api/messages/m/${receiver_id}`,{
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/messages/m/${receiver_id}`,{
             withCredentials: true,
         });
         return res.data.messages;

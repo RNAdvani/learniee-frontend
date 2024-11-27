@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 interface ChatBottombarProps {
   isMobile: boolean;
   socket?: Socket;
+  onSendMessage?: (message: string) => void;
 }
 
 export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
@@ -29,6 +30,7 @@ export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
 export default function ChatBottombar({
   isMobile,
   socket,
+  onSendMessage
 }: ChatBottombarProps) {
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -37,6 +39,7 @@ export default function ChatBottombar({
 
   const {selectedUser} = useChatStore();
   const {user} = useAuth();
+
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(event.target.value);
@@ -50,16 +53,8 @@ export default function ChatBottombar({
   };
 
   const sendMessage = (newMessage: Message) => {
-    useChatStore.setState((state) => ({
-      messages: [...state.messages, newMessage],
-    }));
-    if (socket) {
-      socket.emit("send_message", {
-        sender: user?._id,
-        receiver: selectedUser?._id , 
-        message: newMessage.message,
-      });
-    }
+    console.log(user)
+    onSendMessage && onSendMessage(newMessage?.message!);
   };
 
   const handleThumbsUp = () => {

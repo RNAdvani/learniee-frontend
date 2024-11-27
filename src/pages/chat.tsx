@@ -1,4 +1,6 @@
 import {ChatLayout} from '@/components/chat/chat-layout'
+import { useAuth } from '@/hooks/useAuth';
+import { Navigate } from 'react-router-dom';
 
 
 const chat = () => {
@@ -9,6 +11,12 @@ const chat = () => {
 
   const layoutCookie = getCookie("react-resizable-panels:layout");
   const defaultLayout = layoutCookie ? JSON.parse(layoutCookie) : undefined;
+
+  const {user} = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
 
   return (
     <div className="w-full h-screen">

@@ -6,6 +6,9 @@ import { Form,FormControl, FormField, FormItem, FormLabel, FormMessage } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { registerUser } from '@/services/user';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import Banner from '@/components/banner';
 
 // Define the Zod schema for validation
 const formSchema = z.object({
@@ -40,14 +43,22 @@ const RegisterPage = () => {
         username:"",
     },
   })
+
+  const {setUser} = useAuth()
+
+  const navigate = useNavigate();
+
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
-    await registerUser(data.name, data.email, data.username, data.password);
+    const res = await registerUser(data.name, data.email, data.username, data.password);
+        setUser(res?.data.user);
+      navigate('/chat');
     setIsSubmitting(false);
   };
 
   return (
-    <div className="max-w-md mx-auto h-screen flex justify-center items-center">
+    <div className="max-w-md mx-auto h-screen flex flex-col justify-center items-center">
+        <Banner />
       <Form {...form}>
        <form onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
@@ -107,6 +118,10 @@ const RegisterPage = () => {
             </Button>
        </form>
       </Form>
+      <div className='flex gap-1'>
+        <h1>Already have an account?</h1>
+        <Link to={"/login"} className='underline' onClick={()=>navigate('/login')}>Login</Link>
+      </div>
     </div>
   );
 };

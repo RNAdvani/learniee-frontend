@@ -14,32 +14,87 @@ import { ChatMessageList } from "../ui/chat/chat-message-list";
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { Forward, Heart } from "lucide-react";
 import { Socket } from "socket.io-client";
+import useChatStore from "@/hooks/useChatStore";
+import { useAuth } from "@/hooks/useAuth";
+import { generateAvatarUrl } from "@/lib/dicebar";
 
 interface ChatListProps {
-  messages: Message[];
   selectedUser: UserData;
-  sendMessage: (newMessage: Message) => void;
   isMobile: boolean;
-  socket?: Socket;
+  socket: Socket;
 }
 
 const getMessageVariant = (messageName: string, selectedUserName: string) =>
   messageName !== selectedUserName ? "sent" : "received";
 
-export function ChatList({
-  messages,
-  selectedUser,
-  isMobile,
-  socket
-}: ChatListProps) {
+export function ChatList({ selectedUser, isMobile, socket }: ChatListProps) {
+  const messagesState = useChatStore((state) => state.messages);
+  const setMessagesState = useChatStore((state) => state.setMessages);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
+  const { user } = useAuth();
+
+  // Automatically scroll to the bottom of the chat when messages change
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop =
         messagesContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messagesState]);
+
+  // Set up socket listeners
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleReceiveMessage = (newMessage : any) => {
+      // Update state only if the message isn't already in the list
+      setMessagesState((state) => {
+        const isDuplicate = state.some(
+          (message) => message.timestamp === newMessage.timestamp
+        );
+
+        const isMe = newMessage.sender === user?._id;
+
+        const updatedMessage : Message = {
+          avatar : generateAvatarUrl(isMe ? user?.name! : selectedUser?.name!),
+          name : selectedUser?.name!,
+          message : newMessage.content,
+          timestamp : newMessage.timestamp,
+          isLoading : false,
+          role : newMessage.sender === user?._id ? "receiver" : "sender",
+        }
+
+        return isDuplicate ? state : [...state, updatedMessage];
+      });
+    };
+
+    socket.on("receive_message", handleReceiveMessage);
+
+    return () => {
+      // Clean up the listener to prevent re-registering
+      socket.off("receive_message", handleReceiveMessage);
+    };
+  }, [socket, setMessagesState]);
+
+  const sendMessage = (messageContent: string) => {
+    const newMessage: Message = {
+      name: user?.name || "You", // Replace with the sender's name
+      message: messageContent,
+      timestamp: new Date().toISOString(),
+      avatar: generateAvatarUrl(user?.name!), // Replace with actual avatar URL
+      isLoading: false,
+    };
+
+    // Emit the message to the backend
+    socket.emit("send_message", {
+      sender: user?._id, // Replace with actual sender ID
+      receiver: selectedUser._id,
+      content: messageContent,
+    });
+
+    // Update state locally
+    setMessagesState((state) => [...state, newMessage]);
+  };
 
   const actionIcons = [
     { icon: DotsVerticalIcon, type: "More" },
@@ -51,11 +106,11 @@ export function ChatList({
     <div className="w-full overflow-y-auto h-full flex flex-col">
       <ChatMessageList ref={messagesContainerRef}>
         <AnimatePresence>
-          {messages.map((message, index) => {
+          {messagesState.map((message, index) => {
             const variant = getMessageVariant(message.name, selectedUser.name);
             return (
               <motion.div
-                key={index}
+                key={message.timestamp || index} // Use timestamp as a unique key if available
                 layout
                 initial={{ opacity: 0, scale: 1, y: 50, x: 0 }}
                 animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
@@ -71,7 +126,6 @@ export function ChatList({
                 style={{ originX: 0.5, originY: 0.5 }}
                 className="flex flex-col gap-2 p-4"
               >
-                {/* Usage of ChatBubble component */}
                 <ChatBubble variant={variant}>
                   <ChatBubbleAvatar src={message.avatar} />
                   <ChatBubbleMessage isLoading={message.isLoading}>
@@ -86,11 +140,7 @@ export function ChatList({
                         className="size-7"
                         key={type}
                         icon={<Icon className="size-4" />}
-                        onClick={() =>
-                          console.log(
-                            "Action " + type + " clicked for message " + index,
-                          )
-                        }
+                        onClick={() =>{}}
                       />
                     ))}
                   </ChatBubbleActionWrapper>
@@ -100,7 +150,10 @@ export function ChatList({
           })}
         </AnimatePresence>
       </ChatMessageList>
-      <ChatBottombar socket={socket} isMobile={isMobile} />
+      <ChatBottombar
+        onSendMessage={sendMessage} // Pass the sendMessage function
+        isMobile={isMobile}
+      />
     </div>
   );
 }

@@ -17,6 +17,13 @@ export default {
       },
     },
     extend: {
+      fontFamily:{
+        LexendDeca: ["Lexend Deca", "sans-serif"],
+        Roboto: ['Roboto', 'sans-serif'],
+        Neuton: ['Neuton', 'serif'],
+        quote : ['Meow Script', 'cursive'],
+        RedHatText: ['Red Hat Text', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

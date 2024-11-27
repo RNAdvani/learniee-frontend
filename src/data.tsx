@@ -173,6 +173,8 @@ export interface User {
 }
 
 export interface Chat extends User {
+    lastMessage: string;
+    lastMessageTimestamp: string;
     isOnline: boolean;
     variant: "secondary" | "ghost";
 }

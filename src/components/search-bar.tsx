@@ -22,7 +22,6 @@ interface SearchBarProps {
 
 const SearchBar: React.FC<SearchBarProps> = ({
   searchFunction,
-  onItemSelect,
   maxResults = 5,
 }) => {
   const [query, setQuery] = useState<string>('');
@@ -35,8 +34,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const defaultSearchFunction = async (searchQuery: string): Promise<SearchItem[]> => {
     if (!searchQuery) return [];
     try {
-      const response = await axios.get(`http://localhost:5000/api/user/search`, {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/search`, {
         params: { username: searchQuery },
+        withCredentials : true
       });
       const result = response.data.user;
         if (result.length === 0) return [];
@@ -75,19 +75,19 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }, [query, searchFunction]);
 
   return (
-    <div className="relative w-full max-w-md">
+    <div className="relative w-full max-w-md mb-1">
       <Input
         type="text"
         placeholder="Search users by username"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => query.length > 1 && results.length > 0 && setIsResultsVisible(true)}
-        className="w-full pr-10"
+        className="w-full pr-10 rounded-[5px]"
         onBlur={() => setTimeout(() => setIsResultsVisible(false), 200)}
       />
 
       {isResultsVisible && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md  shadow-lg">
           <ScrollArea className="h-auto max-h-60">
             {isLoading ? (
               <div className="p-4 text-center text-gray-500">Searching...</div>

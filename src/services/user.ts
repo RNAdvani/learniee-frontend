@@ -1,7 +1,7 @@
 import axios from 'axios';
 export const getUser = async (_id:string)=>{
     try {
-        const response = await axios.get(`http://localhost:5000/api/user/userInfo/${_id}`,{
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/userInfo/${_id}`,{
             withCredentials: true,
         })
         return response.data.user
@@ -13,13 +13,11 @@ export const getUser = async (_id:string)=>{
 
 const headers = {
     'Content-Type': 'application/json',
-     "Access-Control-Allow-Origin": "*",
-     "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS"
 }
 
 export const registerUser = async (name:string, email:string, username:string, password:string)=>{
     try {
-        const user =  await axios.post(`http://localhost:5000/api/user/register`,{
+        const user =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/user/register`,{
             name,
             email,
             username,
@@ -29,6 +27,35 @@ export const registerUser = async (name:string, email:string, username:string, p
             withCredentials: true
         })
         return user
+    } catch (error) {
+        console.log(error)
+        return null
+    }
+}
+
+export const loginUser = async (email:string, password:string)=>{
+    try {
+        const user =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/user/login`,{
+            email,
+            password
+        },{
+            headers,
+            withCredentials: true
+        })
+        return user
+    } catch (error) {
+        console.log(error)
+        return null
+    }
+}
+
+
+export const logoutUser = async()=>{
+    try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/user/logout`,{
+            withCredentials: true
+        })
+        return response
     } catch (error) {
         console.log(error)
         return null

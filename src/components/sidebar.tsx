@@ -10,9 +10,14 @@ import {
 } from "@/components/ui/tooltip";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Chat } from "@/data";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useChatStore from "@/hooks/useChatStore";
 import SearchBar from "./search-bar";
+import { generateAvatarUrl } from "@/lib/dicebar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
+import { logoutUser } from "@/services/user";
+import { useAuth } from "@/hooks/useAuth";
 
 
 
@@ -27,7 +32,15 @@ interface SidebarProps {
 export function Sidebar({ chats, isCollapsed }: SidebarProps) {
 
     const {setSelectedUser} = useChatStore();
+    const {setUser} = useAuth()
 
+    const navigate = useNavigate();
+
+    const handleLogout = async()=>{
+      await logoutUser();
+      setUser(null);
+      navigate("/login");
+    }
   return (
     <div
       data-collapsed={isCollapsed}
@@ -41,15 +54,15 @@ export function Sidebar({ chats, isCollapsed }: SidebarProps) {
           </div>
 
           <div>
-            <Link
-              to="#"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-9 w-9",
-              )}
-            >
-              <MoreHorizontal size={20} />
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger><MoreHorizontal size={20} /></DropdownMenuTrigger>
+              <DropdownMenuContent className="rounded-[4px]">
+                <DropdownMenuItem className="text-red-600 text-center cursor-pointer" onClick={()=>{
+                  handleLogout();
+                }}>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
 
             <Link
               to="#"
@@ -64,7 +77,7 @@ export function Sidebar({ chats, isCollapsed }: SidebarProps) {
         </div>
       )}
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
-        <SearchBar/>
+        {!isCollapsed && <SearchBar/>}
         {chats.map((chat, index) =>
           isCollapsed ? (
             <TooltipProvider key={index}>
@@ -82,14 +95,15 @@ export function Sidebar({ chats, isCollapsed }: SidebarProps) {
                       setSelectedUser(chat._id);
                     }}
                   >
-                    <Avatar className="flex justify-center items-center">
+                    <Avatar className="flex justify-center items-center overflow-visible">
                       <AvatarImage
-                        src={chat.avatar}
+                        src={generateAvatarUrl(chat.name)}
                         alt={chat.avatar}
                         width={6}
                         height={6}
-                        className="w-10 h-10 "
+                        className="w-10 h-10 rounded-full "
                       />
+                    { chat.isOnline && <div className="bg-green-400 w-2 h-2 absolute top-0 right-0 rounded-full"></div>}
                     </Avatar>{" "}
                     <span className="sr-only">{chat.name}</span>
                   </Link>
@@ -112,13 +126,13 @@ export function Sidebar({ chats, isCollapsed }: SidebarProps) {
               className={cn(
                 buttonVariants({ variant: chat.variant, size: "xl" }),
                 chat.variant === "secondary" &&
-                  "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
+                  "dark dark:text-white dark:hover:bg-muted dark:hover:text-white shrink",
                 "justify-start gap-4",
               )}
             >
               <Avatar className="flex justify-center items-center relative overflow-visible">
                 <AvatarImage
-                  src={chat.avatar}
+                  src={generateAvatarUrl(chat.name)}
                   alt={chat.avatar}
                   width={6}
                   height={6}
@@ -128,15 +142,9 @@ export function Sidebar({ chats, isCollapsed }: SidebarProps) {
               </Avatar>
               <div className="flex flex-col max-w-28">
                 <span>{chat.name}</span>
-                {chat.messages.length > 0 && (
-                  <span className="text-zinc-300 text-xs truncate ">
-                    {chat.messages[chat.messages.length - 1].name.split(" ")[0]}
-                    :{" "}
-                    {chat.messages[chat.messages.length - 1].isLoading
-                      ? "Typing..."
-                      : chat.messages[chat.messages.length - 1].message}
-                  </span>
-                )}
+                <span className="text-sm text-muted-foreground">
+                  {chat.lastMessage}
+                </span>
               </div>
             </Link>
           ),
