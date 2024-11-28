@@ -11,7 +11,8 @@ export function useSocket() {
   useEffect(() => {
     fetchUser();
     if (user) {
-      const newSocket = io('${import.meta.env.VITE_BACKEND_URL}');
+      console.log(import.meta.env.VITE_BACKEND_URL)
+      const newSocket = io(`${import.meta.env.VITE_BACKEND_URL}`);
       setSocket(newSocket);
 
       newSocket.emit('user_connected', user?._id);

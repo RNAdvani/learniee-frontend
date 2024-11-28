@@ -91,7 +91,7 @@ export default function ChatBottombar({
       socket.on("receive_message", (data) => {
         const newMessage: Message = {
           id: Date.now(),
-          name: "Other User", // Replace with actual sender name
+          name: selectedUser?.name!, // Replace with actual sender name
           avatar: "avatar-url", // Replace with actual sender avatar
           message: data.message,
         };
