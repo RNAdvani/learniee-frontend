@@ -15,6 +15,7 @@ export function useSocket() {
       const newSocket = io(`${import.meta.env.VITE_BACKEND_URL}`);
       setSocket(newSocket);
 
+      console.log(newSocket)
       newSocket.emit('user_connected', user?._id);
 
       return () => {

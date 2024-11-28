@@ -5,6 +5,7 @@ export interface User {
   email: string;
   username: string;
   isOnline: boolean;
+  lastOnline: string;
 }
 
 export interface Message {

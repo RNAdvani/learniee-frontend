@@ -1,255 +1,100 @@
-import {
-  FileImage,
-  Mic,
-  Paperclip,
-  PlusCircle,
-  SendHorizontal,
-  ThumbsUp,
-} from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
-import { Button, buttonVariants } from "../ui/button";
-import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
-import { Message, loggedInUserData } from "@/data";
-import { EmojiPicker } from "../emoji-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { ChatInput } from "../ui/chat/chat-input";
-import useChatStore from "@/hooks/useChatStore";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Send } from "lucide-react";
 import { Socket } from "socket.io-client";
-import { useAuth } from "@/hooks/useAuth";
 
 interface ChatBottombarProps {
-  isMobile: boolean;
-  socket?: Socket;
-  onSendMessage?: (message: string) => void;
+  user: {
+    _id: string;
+  };
+  selectedUser: {
+    _id: string;
+  };
+  socket: Socket;
+  onSendMessage: (message: string) => void;
 }
 
-export const BottombarIcons = [{ icon: FileImage }, { icon: Paperclip }];
-
 export default function ChatBottombar({
-  isMobile,
+  user,
+  selectedUser,
   socket,
-  onSendMessage
+  onSendMessage,
 }: ChatBottombarProps) {
   const [message, setMessage] = useState("");
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const setMessages = useChatStore((state) => state.setMessages);
   const [isTyping, setIsTyping] = useState(false);
 
-  const {selectedUser} = useChatStore();
-  const {user} = useAuth();
-
-
-  const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(event.target.value);
-    if (!isTyping && socket) {
-      socket.emit("typing", {
-        sender: user?._id,
-        receiver: selectedUser?._id,
-      });
+  // Emit 'typing' event when the user starts typing
+  useEffect(() => {
+    if (message.length > 0 && !isTyping) {
       setIsTyping(true);
-    }
-  };
-
-  const sendMessage = (newMessage: Message) => {
-    console.log(user)
-    onSendMessage && onSendMessage(newMessage?.message!);
-  };
-
-  const handleThumbsUp = () => {
-    const newMessage: Message = {
-      id: Date.now(),
-      name: loggedInUserData.name,
-      avatar: loggedInUserData.avatar,
-      message: "👍",
-    };
-    sendMessage(newMessage);
-    setMessage("");
-  };
-
-  const handleSend = () => {
-    if (message.trim()) {
-      const newMessage: Message = {
-        id: Date.now(),
-        name: loggedInUserData.name,
-        avatar: loggedInUserData.avatar,
-        message: message.trim(),
-      };
-      sendMessage(newMessage);
-      setMessage("");
-
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-      setIsTyping(false); // Reset typing state
-    }
-  };
-
-  useEffect(() => {
-    if (socket) {
-      socket.on("receive_message", (data) => {
-        const newMessage: Message = {
-          id: Date.now(),
-          name: selectedUser?.name!, // Replace with actual sender name
-          avatar: "avatar-url", // Replace with actual sender avatar
-          message: data.message,
-        };
-        setMessages((prev) => [...prev, newMessage]);
+      socket.emit("typing", {
+        sender: user._id,
+        receiver: selectedUser._id,
       });
     }
-  }, [socket, setMessages]);
 
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
-
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      handleSend();
+    if (message.length === 0 && isTyping) {
+      setIsTyping(false);
+      socket.emit("stopped_typing", {
+        sender: user._id,
+        receiver: selectedUser._id,
+      });
     }
 
-    if (event.key === "Enter" && event.shiftKey) {
-      event.preventDefault();
-      setMessage((prev) => prev + "\n");
+    const typingTimeout = setTimeout(() => {
+      if (isTyping) {
+        setIsTyping(false);
+        socket.emit("stopped_typing", {
+          sender: user._id,
+          receiver: selectedUser._id,
+        });
+      }
+    }, 3000); // Stop typing after 3 seconds of inactivity
+
+    return () => clearTimeout(typingTimeout);
+  }, [message, isTyping, socket, user._id, selectedUser._id]);
+
+  // Handle message sending
+  const handleSendMessage = () => {
+    if (message.trim() === "") return;
+
+    // Emit 'stopped_typing' event when the message is sent
+    socket.emit("stopped_typing", {
+      sender: user._id,
+      receiver: selectedUser._id,
+    });
+
+    onSendMessage(message.trim());
+    setMessage("");
+    setIsTyping(false);
+  };
+
+  // Handle "Enter" key press to send the message
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
   return (
-    <div className="px-2 py-4 flex justify-between w-full items-center gap-2">
-      <div className="flex">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Link
-              to="#"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-9 w-9",
-                "shrink-0"
-              )}
-            >
-              <PlusCircle size={22} className="text-muted-foreground" />
-            </Link>
-          </PopoverTrigger>
-          <PopoverContent side="top" className="w-full p-2">
-            {message.trim() || isMobile ? (
-              <div className="flex gap-2">
-                <Link
-                  to="#"
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "icon" }),
-                    "h-9 w-9",
-                    "shrink-0"
-                  )}
-                >
-                  <Mic size={22} className="text-muted-foreground" />
-                </Link>
-                {BottombarIcons.map((icon, index) => (
-                  <Link
-                    key={index}
-                    to="#"
-                    className={cn(
-                      buttonVariants({ variant: "ghost", size: "icon" }),
-                      "h-9 w-9",
-                      "shrink-0"
-                    )}
-                  >
-                    <icon.icon size={22} className="text-muted-foreground" />
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <Link
-                to="#"
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon" }),
-                  "h-9 w-9",
-                  "shrink-0"
-                )}
-              >
-                <Mic size={22} className="text-muted-foreground" />
-              </Link>
-            )}
-          </PopoverContent>
-        </Popover>
-        {!message.trim() && !isMobile && (
-          <div className="flex">
-            {BottombarIcons.map((icon, index) => (
-              <Link
-                key={index}
-                to="#"
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon" }),
-                  "h-9 w-9",
-                  "shrink-0"
-                )}
-              >
-                <icon.icon size={22} className="text-muted-foreground" />
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <AnimatePresence initial={false}>
-        <motion.div
-          key="input"
-          className="w-full relative"
-          layout
-          initial={{ opacity: 0, scale: 1 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1 }}
-          transition={{
-            opacity: { duration: 0.05 },
-            layout: {
-              type: "spring",
-              bounce: 0.15,
-            },
-          }}
-        >
-          <ChatInput
-            value={message}
-            ref={inputRef}
-            onKeyDown={handleKeyPress}
-            onChange={handleInputChange}
-            placeholder="Type a message..."
-            className="rounded-full"
-          />
-          <div className="absolute right-4 bottom-2">
-            <EmojiPicker
-              onChange={(value) => {
-                setMessage(message + value);
-                if (inputRef.current) {
-                  inputRef.current.focus();
-                }
-              }}
-            />
-          </div>
-        </motion.div>
-
-        {message.trim() ? (
-          <Button
-            className="h-9 w-9 shrink-0"
-            onClick={handleSend}
-            variant="ghost"
-            size="icon"
-          >
-            <SendHorizontal size={22} className="text-muted-foreground" />
-          </Button>
-        ) : (
-          <Button
-            className="h-9 w-9 shrink-0"
-            onClick={handleThumbsUp}
-            variant="ghost"
-            size="icon"
-          >
-            <ThumbsUp size={22} className="text-muted-foreground" />
-          </Button>
-        )}
-      </AnimatePresence>
+    <div className="flex items-center gap-2 p-2 border-t border-gray-200 bg-white">
+      <Input
+        type="text"
+        placeholder="Type a message..."
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className="flex-1"
+      />
+      <Button
+        variant="ghost"
+        onClick={handleSendMessage}
+        className="h-10 w-10 flex justify-center items-center"
+      >
+        <Send size={20} />
+      </Button>
     </div>
   );
 }

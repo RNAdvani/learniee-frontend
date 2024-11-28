@@ -1,4 +1,4 @@
-import { Message, UserData } from "@/data";
+import { Message, UserData,  } from "@/data";
 import { useRef, useEffect } from "react";
 import ChatBottombar from "./chat-bottombar";
 import { AnimatePresence, motion } from "framer-motion";
@@ -27,7 +27,7 @@ interface ChatListProps {
 const getMessageVariant = (messageName: string, selectedUserName: string) =>
   messageName !== selectedUserName ? "sent" : "received";
 
-export function ChatList({ selectedUser, isMobile, socket }: ChatListProps) {
+export function ChatList({ selectedUser, socket }: ChatListProps) {
   const messagesState = useChatStore((state) => state.messages);
   const setMessagesState = useChatStore((state) => state.setMessages);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -59,7 +59,7 @@ export function ChatList({ selectedUser, isMobile, socket }: ChatListProps) {
           avatar : generateAvatarUrl(isMe ? user?.name! : selectedUser?.name!),
           name : selectedUser?.name!,
           message : newMessage.content,
-          timestamp : newMessage.timestamp,
+          timestamp : new Date(newMessage.timestamp).toLocaleDateString(),
           isLoading : false,
           role : newMessage.sender === user?._id ? "receiver" : "sender",
         }
@@ -152,7 +152,9 @@ export function ChatList({ selectedUser, isMobile, socket }: ChatListProps) {
       </ChatMessageList>
       <ChatBottombar
         onSendMessage={sendMessage} // Pass the sendMessage function
-        isMobile={isMobile}
+        selectedUser={selectedUser}
+        socket={socket}
+        user={user!}
       />
     </div>
   );

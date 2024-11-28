@@ -63,6 +63,8 @@ const useChatStore = create<State & Actions>()((set) => ({
         isLiked : false,
         isLoading : false
       })) as Message[] : [],
+      isOnline: user?.isOnline as boolean,
+      lastOnline: user?.lastOnline as string,
     } });
 
   },

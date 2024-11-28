@@ -1,46 +1,11 @@
 import { generateAvatarUrl } from "./lib/dicebar";
 
-export const Users: User[] = [
-  {
-    _id: "1",
-    avatar:
-      "https://images.freeimages.com/images/large-previews/971/basic-shape-avatar-1632968.jpg?fmt=webp&h=350",
-    messages: [],
-    name: "Jane Doe",
-  },
-  {
-    _id: "2",
-    avatar:
-      "https://images.freeimages.com/images/large-previews/fdd/man-avatar-1632964.jpg?fmt=webp&h=350",
-    messages: [],
-    name: "John Doe",
-  },
-  {
-    _id: "3",
-    avatar:
-      "https://images.freeimages.com/images/large-previews/d1f/lady-avatar-1632967.jpg?fmt=webp&h=350",
-    messages: [],
-    name: "Elizabeth Smith",
-  },
-  {
-    _id: "4",
-    avatar:
-      "https://images.freeimages.com/images/large-previews/023/geek-avatar-1632962.jpg?fmt=webp&h=350",
-    messages: [],
-    name: "John Smith",
-  },
-  {
-    _id: "5",
-    avatar:
-      "https://avatars.githubusercontent.com/u/114422072?s=400&u=8a176a310ca29c1578a70b1c33bdeea42bf000b4&v=4",
-    messages: [],
-    name: "Jakob Hoeg",
-  },
-];
 
 export const userData: User[] = [
   {
     _id: "1",
+    isOnline: true,
+    lastOnline: "2021-07-08T09:57:00.000Z",
     avatar:
       "https://images.freeimages.com/images/large-previews/971/basic-shape-avatar-1632968.jpg?fmt=webp&h=350",
     messages: [
@@ -126,6 +91,8 @@ export const userData: User[] = [
       "https://images.freeimages.com/images/large-previews/fdd/man-avatar-1632964.jpg?fmt=webp&h=350",
     name: "John Doe",
     messages: [],
+    isOnline: false,
+    lastOnline: "2021-07-08T09:57:00.000Z",
   },
   {
     _id: "3",
@@ -133,6 +100,8 @@ export const userData: User[] = [
       "https://images.freeimages.com/images/large-previews/d1f/lady-avatar-1632967.jpg?fmt=webp&h=350",
     name: "Elizabeth Smith",
     messages: [],
+    isOnline: true,
+    lastOnline: "2021-07-08T09:57:00.000Z",
   },
   {
     _id: "4",
@@ -140,6 +109,8 @@ export const userData: User[] = [
       "https://images.freeimages.com/images/large-previews/023/geek-avatar-1632962.jpg?fmt=webp&h=350",
     name: "John Smith",
     messages: [],
+    isOnline: false,
+    lastOnline: "2021-07-08T09:57:00.000Z",
   },
 ];
 
@@ -170,6 +141,8 @@ export interface User {
   avatar: string;
   messages: Message[];
   name: string;
+  isOnline: boolean;
+  lastOnline?: string;
 }
 
 export interface Chat extends User {
